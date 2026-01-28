@@ -9,7 +9,7 @@ const IMAGES = {
   ], 
   // Gói 2 Ngày (Đã thay bằng ảnh NGANG mới nhất của bạn)
   TWO_DAYS: [
-    "https://i.postimg.cc/MT5M5vhJ/Baogia2ngayngang.png" 
+   "https://i.postimg.cc/TwHzmXT2/Baogia2ngayngang.png"
   ]
 };
 
@@ -156,4 +156,5 @@ async function sendToFB(body) {
     body: JSON.stringify(body),
   });
 }
+
 
