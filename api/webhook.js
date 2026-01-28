@@ -1,14 +1,13 @@
 // api/webhook.js
 const VERIFY_TOKEN = "emira_wedding_secret_2024";
 
-// Link ảnh báo giá
+// --- CẤU HÌNH LINK ẢNH (ĐÃ CẬP NHẬT) ---
 const IMAGES = {
-  ONE_DAY: "https://drive.google.com/uc?export=view&id=1LrUvjhhEFVWQf3f2w76ZDrU_WySJA6SV", 
-  TWO_DAYS: "https://drive.google.com/uc?export=view&id=1GuGpGPiW4ZpAqs5IQWGwb9TbOenqcHv4"
+  ONE_DAY: "https://i.postimg.cc/47JcFGw2/Baogia1ngay.png", // Link bảng giá 1 ngày của bạn
+  TWO_DAYS: "https://i.postimg.cc/hQvdc0kD/Baogia2ngay.png" // Link bảng giá 2 ngày của bạn
 };
 
-// --- BỘ NHỚ TẠM (RAM) ---
-// Dùng để lưu xem khách đang chọn gói nào
+// Bộ nhớ tạm
 const userSessions = new Map();
 
 export default async function handler(req, res) {
@@ -53,12 +52,11 @@ async function handleMessage(sender_psid, received_message) {
   const text = received_message.text ? received_message.text.toLowerCase() : "";
   
   // 1. Chào hỏi
-  if (text.includes("chào") || text.includes("giá") || text.includes("tư vấn")) {
-    // Reset bộ nhớ khi khách hỏi mới
-    userSessions.delete(sender_psid); 
+  if (text.includes("chào") || text.includes("giá") || text.includes("tư vấn") || text.includes("bao nhiêu")) {
+    userSessions.delete(sender_psid); // Reset bộ nhớ
     
     const response = {
-      text: "Dạ Emira Wedding xin chào ạ! Em là AI tư vấn. 🥰\n\nDạ cho em hỏi là mình dự kiến tổ chức các lễ (Ăn hỏi, Cưới) trong cùng 1 ngày hay là 2 ngày khác nhau ạ?",
+      text: "Dạ Emira Wedding xin chào ạ! Em là tư vấn viên của Emira. 🥰\n\nDạ cho em hỏi là mình dự kiến tổ chức các lễ (Ăn hỏi, Cưới) trong cùng 1 ngày hay là 2 ngày khác nhau ạ?",
       quick_replies: [
         { content_type: "text", title: "1 Ngày", payload: "CHON_1_NGAY" },
         { content_type: "text", title: "2 Ngày", payload: "CHON_2_NGAY" }
@@ -67,21 +65,19 @@ async function handleMessage(sender_psid, received_message) {
     await callSendAPI(sender_psid, response);
   }
   
-  // 2. Khách nhắn địa điểm/ngày -> Kiểm tra bộ nhớ để gửi đúng nút
+  // 2. Khách nhắn thông tin -> Bot kiểm tra bộ nhớ
   else if (text.length > 3) {
-     const userChoice = userSessions.get(sender_psid); // Lục lại ký ức xem khách chọn gì
+     const userChoice = userSessions.get(sender_psid); 
      let buttons = [];
 
      if (userChoice === "1_NGAY") {
-         // Nếu nhớ là khách chọn 1 ngày -> Chỉ hiện nút 1 ngày
          buttons = [{ content_type: "text", title: "👉 Xem Báo Giá 1 Ngày", payload: "XEM_GIA_1_NGAY" }];
      } 
      else if (userChoice === "2_NGAY") {
-         // Nếu nhớ là khách chọn 2 ngày -> Chỉ hiện nút 2 ngày
          buttons = [{ content_type: "text", title: "👉 Xem Báo Giá 2 Ngày", payload: "XEM_GIA_2_NGAY" }];
      } 
      else {
-         // Nếu "quên" (do để lâu quá) -> Hiện cả 2 cho chắc ăn
+         // Nếu khách không bấm nút mà chat luôn, hiện cả 2 cho chắc
          buttons = [
             { content_type: "text", title: "Xem Báo Giá 1 Ngày", payload: "XEM_GIA_1_NGAY" },
             { content_type: "text", title: "Xem Báo Giá 2 Ngày", payload: "XEM_GIA_2_NGAY" }
@@ -99,17 +95,17 @@ async function handleMessage(sender_psid, received_message) {
 async function handlePostback(sender_psid, received_postback) {
   const payload = received_postback.payload;
   
-  // LƯU VÀO BỘ NHỚ TẠM
+  // LƯU BỘ NHỚ
   if (payload === "CHON_1_NGAY") {
-    userSessions.set(sender_psid, "1_NGAY"); // Lưu: Ông này chọn 1 ngày
-    await callSendAPI(sender_psid, { text: "Dạ vâng gói 1 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin **NGÀY TỔ CHỨC** và **ĐỊA ĐIỂM** (Quận/Huyện) để em check lịch ngay nhé! 👇" });
+    userSessions.set(sender_psid, "1_NGAY");
+    await callSendAPI(sender_psid, { text: "Dạ vâng gói 1 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" });
   } 
   else if (payload === "CHON_2_NGAY") {
-    userSessions.set(sender_psid, "2_NGAY"); // Lưu: Ông này chọn 2 ngày
-    await callSendAPI(sender_psid, { text: "Dạ vâng gói 2 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin **NGÀY TỔ CHỨC** và **ĐỊA ĐIỂM** (Quận/Huyện) để em check lịch ngay nhé! 👇" });
+    userSessions.set(sender_psid, "2_NGAY");
+    await callSendAPI(sender_psid, { text: "Dạ vâng gói 2 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" });
   }
 
-  // GỬI ẢNH (Dựa trên nút khách bấm cuối cùng)
+  // GỬI ẢNH (ĐÃ CẬP NHẬT LINK CHUẨN)
   else if (payload === "XEM_GIA_1_NGAY") {
     await sendImage(sender_psid, IMAGES.ONE_DAY);
     await callSendAPI(sender_psid, { text: "Dạ đây là báo giá gói 1 Ngày ạ. Anh chị tham khảo cần tư vấn thêm cứ nhắn em nhé! ❤️" });
@@ -120,17 +116,17 @@ async function handlePostback(sender_psid, received_postback) {
   }
 }
 
-// CÁC HÀM GIAO TIẾP FACEBOOK (GIỮ NGUYÊN)
-async function callSendAPI(sender_psid, response) {
-  const requestBody = { recipient: { id: sender_psid }, message: response };
-  await sendToFB(requestBody);
-}
-
+// HÀM GỬI ẢNH CHUẨN
 async function sendImage(sender_psid, imageUrl) {
   const requestBody = {
     recipient: { id: sender_psid },
     message: { attachment: { type: "image", payload: { url: imageUrl, is_reusable: true } } }
   };
+  await sendToFB(requestBody);
+}
+
+async function callSendAPI(sender_psid, response) {
+  const requestBody = { recipient: { id: sender_psid }, message: response };
   await sendToFB(requestBody);
 }
 
