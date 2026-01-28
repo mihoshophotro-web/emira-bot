@@ -5,8 +5,7 @@ const VERIFY_TOKEN = "emira_wedding_secret_2024";
 const IMAGES = {
   // Gói 1 Ngày (Vẫn giữ nguyên 2 ảnh cũ của bạn vì bạn chưa gửi ảnh ngang gói này)
   ONE_DAY: [
-    "https://i.postimg.cc/QBH6fRxL/Baogia1ngay-01.png",
-    "https://i.postimg.cc/06btVL5F/Baogia1ngay-02.png"
+    "https://i.postimg.cc/GtN5Bh3Y/Baogia1ngay-Ngang.png"
   ], 
   // Gói 2 Ngày (Đã thay bằng ảnh NGANG mới nhất của bạn)
   TWO_DAYS: [
@@ -157,3 +156,4 @@ async function sendToFB(body) {
     body: JSON.stringify(body),
   });
 }
+
