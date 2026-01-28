@@ -1,24 +1,24 @@
 // api/webhook.js
 const VERIFY_TOKEN = "emira_wedding_secret_2024";
 
-// --- CẤU HÌNH ẢNH (ĐÃ CẬP NHẬT 4 LINK PNG MỚI NHẤT) ---
+// --- CẤU HÌNH ẢNH ---
 const IMAGES = {
+  // Gói 1 Ngày (Vẫn giữ nguyên 2 ảnh cũ của bạn vì bạn chưa gửi ảnh ngang gói này)
   ONE_DAY: [
-    "https://i.postimg.cc/QBH6fRxL/Baogia1ngay-01.png", // Ảnh 1 Ngày (Phần trên)
-    "https://i.postimg.cc/06btVL5F/Baogia1ngay-02.png"  // Ảnh 1 Ngày (Phần dưới)
+    "https://i.postimg.cc/QBH6fRxL/Baogia1ngay-01.png",
+    "https://i.postimg.cc/06btVL5F/Baogia1ngay-02.png"
   ], 
+  // Gói 2 Ngày (Đã thay bằng ảnh NGANG mới nhất của bạn)
   TWO_DAYS: [
-   TWO_DAYS: [
     "https://i.postimg.cc/MT5M5vhJ/Baogia2ngayngang.png" 
-  ]
   ]
 };
 
-// Bộ nhớ tạm để lưu lựa chọn của khách
+// Bộ nhớ tạm
 const userSessions = new Map();
 
 export default async function handler(req, res) {
-  // 1. XÁC THỰC WEBHOOK
+  // 1. XÁC THỰC
   if (req.method === "GET") {
     if (req.query["hub.mode"] === "subscribe" && req.query["hub.verify_token"] === VERIFY_TOKEN) {
       res.status(200).send(req.query["hub.challenge"]);
@@ -28,31 +28,32 @@ export default async function handler(req, res) {
     return;
   }
 
-  // 2. XỬ LÝ TIN NHẮN ĐẾN
+  // 2. XỬ LÝ TIN NHẮN
   if (req.method === "POST") {
-    const body = req.body;
-    if (body.object === "page") {
-      for (const entry of body.entry) {
-        const webhook_event = entry.messaging[0];
-        const sender_psid = webhook_event.sender.id;
+    try {
+      const body = req.body;
+      if (body.object === "page") {
+        for (const entry of body.entry) {
+          const webhook_event = entry.messaging[0];
+          const sender_psid = webhook_event.sender.id;
 
-        // Ưu tiên xử lý nút bấm (Postback)
-        if (webhook_event.postback) {
-          await handlePostback(sender_psid, webhook_event.postback);
-        } 
-        // Xử lý tin nhắn chữ
-        else if (webhook_event.message) {
-            // Nếu là nút Quick Reply (nút trắng)
-            if (webhook_event.message.quick_reply) {
-                await handlePostback(sender_psid, { payload: webhook_event.message.quick_reply.payload });
-            } else {
-                await handleMessage(sender_psid, webhook_event.message);
-            }
+          if (webhook_event.postback) {
+            await handlePostback(sender_psid, webhook_event.postback);
+          } else if (webhook_event.message) {
+              if (webhook_event.message.quick_reply) {
+                  await handlePostback(sender_psid, { payload: webhook_event.message.quick_reply.payload });
+              } else {
+                  await handleMessage(sender_psid, webhook_event.message);
+              }
+          }
         }
+        res.status(200).send("EVENT_RECEIVED");
+      } else {
+        res.status(404).send();
       }
-      res.status(200).send("EVENT_RECEIVED");
-    } else {
-      res.status(404).send();
+    } catch (error) {
+      console.error("LỖI BOT:", error);
+      res.status(500).send("SERVER_ERROR");
     }
   }
 }
@@ -64,7 +65,7 @@ async function handleMessage(sender_psid, received_message) {
   
   // 1. Chào hỏi
   if (text.includes("chào") || text.includes("giá") || text.includes("tư vấn") || text.includes("bao nhiêu")) {
-    userSessions.delete(sender_psid); // Reset bộ nhớ
+    userSessions.delete(sender_psid); 
     
     const response = {
       text: "Dạ Emira Wedding xin chào ạ! Em là tư vấn viên của Emira. 🥰\n\nDạ cho em hỏi là mình dự kiến tổ chức các lễ (Ăn hỏi, Cưới) trong cùng 1 ngày hay là 2 ngày khác nhau ạ?",
@@ -76,12 +77,11 @@ async function handleMessage(sender_psid, received_message) {
     await callSendAPI(sender_psid, response);
   }
   
-  // 2. Logic khi khách nhắn tin (Địa điểm/Ngày)
+  // 2. Logic kiểm tra bộ nhớ
   else if (text.length > 3) {
      const userChoice = userSessions.get(sender_psid); 
      let buttons = [];
 
-     // Kiểm tra bộ nhớ để hiện đúng nút
      if (userChoice === "1_NGAY") {
          buttons = [{ content_type: "text", title: "👉 Xem Báo Giá 1 Ngày", payload: "XEM_GIA_1_NGAY" }];
      } 
@@ -89,7 +89,6 @@ async function handleMessage(sender_psid, received_message) {
          buttons = [{ content_type: "text", title: "👉 Xem Báo Giá 2 Ngày", payload: "XEM_GIA_2_NGAY" }];
      } 
      else {
-         // Nếu không nhớ thì hiện cả 2
          buttons = [
             { content_type: "text", title: "Xem Báo Giá 1 Ngày", payload: "XEM_GIA_1_NGAY" },
             { content_type: "text", title: "Xem Báo Giá 2 Ngày", payload: "XEM_GIA_2_NGAY" }
@@ -107,7 +106,6 @@ async function handleMessage(sender_psid, received_message) {
 async function handlePostback(sender_psid, received_postback) {
   const payload = received_postback.payload;
   
-  // KHÁCH CHỌN GÓI -> LƯU VÀO BỘ NHỚ
   if (payload === "CHON_1_NGAY") {
     userSessions.set(sender_psid, "1_NGAY");
     await callSendAPI(sender_psid, { text: "Dạ vâng gói 1 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" });
@@ -117,30 +115,27 @@ async function handlePostback(sender_psid, received_postback) {
     await callSendAPI(sender_psid, { text: "Dạ vâng gói 2 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" });
   }
 
-  // KHÁCH BẤM XEM GIÁ -> GỬI 2 ẢNH LIÊN TIẾP
+  // LOGIC GỬI ẢNH
   else if (payload === "XEM_GIA_1_NGAY") {
-    // Vòng lặp: Gửi lần lượt từng ảnh trong danh sách
     for (const url of IMAGES.ONE_DAY) {
         await sendImage(sender_psid, url);
     }
-    // Gửi câu chốt
     setTimeout(async () => {
-        await callSendAPI(sender_psid, { text: "Dạ đây là báo giá chi tiết gói 1 Ngày ạ (Gồm 2 ảnh trên).\n\nAnh chị tham khảo cần tư vấn thêm cứ nhắn em nhé! ❤️" });
-    }, 1000);
+        await callSendAPI(sender_psid, { text: "Dạ đây là chi tiết báo giá gói 1 Ngày ạ. Anh chị xem qua cần tư vấn thêm cứ nhắn em nhé! ❤️" });
+    }, 1500);
   } 
   else if (payload === "XEM_GIA_2_NGAY") {
-    // Vòng lặp: Gửi lần lượt từng ảnh trong danh sách
+    // Gửi ảnh ngang mới
     for (const url of IMAGES.TWO_DAYS) {
         await sendImage(sender_psid, url);
     }
-    // Gửi câu chốt
     setTimeout(async () => {
-        await callSendAPI(sender_psid, { text: "Dạ đây là báo giá chi tiết gói 2 Ngày ạ (Gồm 2 ảnh trên).\n\nAnh chị tham khảo cần tư vấn thêm cứ nhắn em nhé! ❤️" });
-    }, 1000);
+        await callSendAPI(sender_psid, { text: "Dạ đây là chi tiết báo giá gói 2 Ngày ạ. Anh chị xem qua cần tư vấn thêm cứ nhắn em nhé! ❤️" });
+    }, 1500);
   }
 }
 
-// CÁC HÀM GỬI DỮ LIỆU SANG FACEBOOK
+// CÁC HÀM GỬI DATA
 async function sendImage(sender_psid, imageUrl) {
   const requestBody = {
     recipient: { id: sender_psid },
@@ -162,4 +157,3 @@ async function sendToFB(body) {
     body: JSON.stringify(body),
   });
 }
-
