@@ -8,8 +8,9 @@ const IMAGES = {
     "https://i.postimg.cc/06btVL5F/Baogia1ngay-02.png"  // Ảnh 1 Ngày (Phần dưới)
   ], 
   TWO_DAYS: [
-    "https://i.postimg.cc/v1cP0pHF/Baogia2ngay-01.png", // Ảnh 2 Ngày (Phần trên)
-    "https://i.postimg.cc/4Km8Wr4D/Baogia2ngay-02.png"  // Ảnh 2 Ngày (Phần dưới)
+   TWO_DAYS: [
+    "https://i.postimg.cc/MT5M5vhJ/Baogia2ngayngang.png" 
+  ]
   ]
 };
 
@@ -161,3 +162,4 @@ async function sendToFB(body) {
     body: JSON.stringify(body),
   });
 }
+
