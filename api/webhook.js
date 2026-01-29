@@ -1,15 +1,14 @@
 // api/webhook.js
 const VERIFY_TOKEN = "emira_wedding_secret_2024";
 
-// --- CẤU HÌNH ẢNH ---
+// --- CẤU HÌNH ẢNH BÁO GIÁ ---
 const IMAGES = {
-  // Gói 1 Ngày (Vẫn giữ nguyên 2 ảnh cũ của bạn vì bạn chưa gửi ảnh ngang gói này)
   ONE_DAY: [
-    "https://i.postimg.cc/GtN5Bh3Y/Baogia1ngay-Ngang.png"
+    "https://i.postimg.cc/QBH6fRxL/Baogia1ngay-01.png",
+    "https://i.postimg.cc/06btVL5F/Baogia1ngay-02.png"
   ], 
-  // Gói 2 Ngày (Đã thay bằng ảnh NGANG mới nhất của bạn)
   TWO_DAYS: [
-   "https://i.postimg.cc/TwHzmXT2/Baogia2ngayngang.png"
+    "https://i.postimg.cc/MT5M5vhJ/Baogia2ngayngang.png" 
   ]
 };
 
@@ -105,16 +104,23 @@ async function handleMessage(sender_psid, received_message) {
 async function handlePostback(sender_psid, received_postback) {
   const payload = received_postback.payload;
   
+  // --- KỊCH BẢN GÓI 1 NGÀY (Đã xuống dòng thoáng đẹp) ---
   if (payload === "CHON_1_NGAY") {
     userSessions.set(sender_psid, "1_NGAY");
-    await callSendAPI(sender_psid, { text: "Dạ vâng gói 1 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" });
+    await callSendAPI(sender_psid, { 
+        text: "Dạ vâng gói 1 Ngày ạ. Em gửi anh chị xem qua sản phẩm bên em ạ:\n\n📸 Link ảnh: https://emirawedding.mypixieset.com/photos/\n\n🎥 Link video: https://emirawedding.mypixieset.com/videos/\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" 
+    });
   } 
+  
+  // --- KỊCH BẢN GÓI 2 NGÀY (Đã xuống dòng thoáng đẹp) ---
   else if (payload === "CHON_2_NGAY") {
     userSessions.set(sender_psid, "2_NGAY");
-    await callSendAPI(sender_psid, { text: "Dạ vâng gói 2 Ngày ạ.\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" });
+    await callSendAPI(sender_psid, { 
+        text: "Dạ vâng gói 2 Ngày ạ. Em gửi anh chị xem qua sản phẩm bên em ạ:\n\n📸 Link ảnh: https://emirawedding.mypixieset.com/photos/\n\n🎥 Link video: https://emirawedding.mypixieset.com/videos/\n\nAnh/Chị nhắn giúp em xin *NGÀY TỔ CHỨC* và *ĐỊA ĐIỂM* (Quận/Huyện) để em check lịch ngay nhé! 👇" 
+    });
   }
 
-  // LOGIC GỬI ẢNH
+  // --- GỬI ẢNH BÁO GIÁ ---
   else if (payload === "XEM_GIA_1_NGAY") {
     for (const url of IMAGES.ONE_DAY) {
         await sendImage(sender_psid, url);
@@ -124,7 +130,6 @@ async function handlePostback(sender_psid, received_postback) {
     }, 1500);
   } 
   else if (payload === "XEM_GIA_2_NGAY") {
-    // Gửi ảnh ngang mới
     for (const url of IMAGES.TWO_DAYS) {
         await sendImage(sender_psid, url);
     }
@@ -156,5 +161,3 @@ async function sendToFB(body) {
     body: JSON.stringify(body),
   });
 }
-
-
